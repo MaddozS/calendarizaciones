@@ -72,6 +72,7 @@ class SRTF():
                 gantt[i]["Ráfaga restante"] = self.actual_process.remaining_time(i)
 
             else:
+                #Fix
                 shortest = self.wait_list[0]
 
                 for proceso in self.wait_list[1:]:
