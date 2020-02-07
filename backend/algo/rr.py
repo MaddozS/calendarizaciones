@@ -7,8 +7,7 @@ class RR:
     quantum = 0
 
     def __init__(self, quantum, *procesos):
-        self.processes = procesos
-        list(self.processes)
+        self.processes = list(procesos)
         self.quantum = quantum
 
         for proceso in procesos:
@@ -20,12 +19,12 @@ class RR:
     def rr(self):
         gantt = {}
         while self.transcurred_time != self.total_time:
+            for x in self.processes:
+                print(x.nombre)
 
             for proceso in self.processes:
-                gantt[int(self.transcurred_time)] = {}
+                print(proceso.nombre, " ", proceso.rafaga)
                 proceso.wait = self.transcurred_time - proceso.summon
-                gantt[int(self.transcurred_time)]["Proceso"] = proceso.nombre
-                gantt[int(self.transcurred_time)]["Ráfaga restante"] = proceso.rafaga
                 if proceso.rafaga > self.quantum:
                     proceso.rafaga -= self.quantum
                     self.transcurred_time += self.quantum
@@ -34,8 +33,14 @@ class RR:
                     self.transcurred_time += proceso.rafaga
                     proceso.summon = self.transcurred_time
                     proceso.rafaga -= proceso.rafaga
+
                     self.processes.remove(proceso)
-                print(proceso.wait)
+
+                gantt[self.transcurred_time] = {}
+                gantt[self.transcurred_time]["Proceso"] = proceso.nombre
+                gantt[self.transcurred_time]["Ráfaga restante"] = proceso.rafaga
+
+        return gantt
 
 
 

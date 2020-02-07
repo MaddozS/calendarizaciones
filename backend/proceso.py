@@ -3,7 +3,7 @@ class Proceso():
     rafaga = 0
     nombre = 0
     wait = 0
-
+    summon=0
     def __init__(self, entrada, rafaga, nombre):
         self.entrada = entrada
         self.rafaga = rafaga
