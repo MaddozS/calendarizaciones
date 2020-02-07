@@ -10,7 +10,7 @@ p3 = Proceso(4, 1, "p3")
 p4 = Proceso(5, 4, "p4")
 procesos = [p1, p2, p3, p4]
 
-gantt = srtf.SRTF(*procesos)
+gantt = srtf.SRTF(p1, p2, p3, p4)
 
 i=0
 result = gantt.srtf()
@@ -25,16 +25,4 @@ for proceso in procesos:
 print("Total de tiempo en espera: ", gantt.total_wait_time())
 print("Tiempo de espera promedio: ", gantt.total_wait_time()/gantt.count_processes)
 
-# Flask constructor takes the name of  
-# current module (__name__) as argument. 
-app = Flask(__name__) 
-@app.route('/get_results') 
-def results(): 
-    return result
-
-@app.route('/')
-  
-# main driver function 
-if __name__ == '__main__': 
-    app.run() 
 

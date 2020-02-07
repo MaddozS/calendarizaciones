@@ -1,149 +1,110 @@
-import json
+import tkinter as tk
+from backend.proceso import Proceso
+
+class MainWindow:
+    def __init__(self, master):
+        self.master = master
+        self.master.title("")
+        # self.master.geometry("500x500")
+
+        self.frame = tk.Frame(self.master)
+        self.label = tk.Label(self.frame, text="Simulador de calendarización de procesos", justify='center')
+        self.label.grid(row=0, column=0, sticky="we", columnspan=2, pady=40, padx = 20)
+        
+        self.button1 = tk.Button(self.frame, text = 'SRTF', command = self.srtf_window)
+        self.button1.grid(row=1, column=0, pady = (0,40))
+
+        self.button2 = tk.Button(self.frame, text = 'Round Robin')
+        self.button2.grid(row=1, column=1, pady = (0,40))
+
+        self.frame.pack()
+
+    def srtf_window(self):
+        self.newWindow = tk.Toplevel(self.master)
+        self.app = SRTFWindow(self.newWindow)
+
+class SRTFWindow:
+    procesos_list = []
+    count_process = 0
+    def __init__(self, master):
+        self.master = master
+        self.frame = tk.Frame(self.master)
+
+        # Table of the processes added
+        self.process_table = tk.Frame(self.frame)
+        self.process_table.grid(row=0, column=0, sticky="we", columnspan=10, padx=30)
+
+        self.name_process = tk.Label(self.process_table, text="Proceso", justify='center', background = "white")
+        self.name_process.grid(row=0, column=0, sticky="we")
+
+        self.entry_process = tk.Label(self.process_table, text="Tiempo de entrada", justify='center', background = "white")
+        self.entry_process.grid(row=0, column=1, sticky="we")
+
+        self.burst_process = tk.Label(self.process_table, text="Ráfaga", justify='center', background = "white")
+        self.burst_process.grid(row=0, column=2, sticky="we")
+
+        self.add_process_button = tk.Button(self.process_table, text="+", command=self.add_process_window)
+        self.add_process_button.grid(row=0, column=3,)
+
+        self.frame.pack()
+
+    def add_process_window(self):
+        self.master.withdraw()
+        self.newWindow = tk.Toplevel(self.master)
+        self.app = AddProcessWindowSRTF(self.newWindow, self.count_process, self.procesos_list)
+
+    def close_windows(self):
+        self.master.destroy()
+
+class AddProcessWindowSRTF:
+    def __init__(self, master, count_proceso, procesos):
+        self.count_proceso = count_proceso
+        self.procesos = procesos
+        self.master = master
+        self.frame = tk.Frame(self.master)
+
+        self.label1 = tk.Label(self.frame, text="Ráfaga", justify='right')
+        self.label1.grid(row=0, column=0, sticky="we")
+
+        self.input1 = tk.Entry(self.frame)
+        self.input1.grid(row=0, column=1, sticky="we")
+
+        self.label2 = tk.Label(self.frame, text="Tiempo de llegada", justify='right')
+        self.label2.grid(row=1, column=0, sticky="we")
+
+        self.input2 = tk.Entry(self.frame)
+        self.input2.grid(row=1, column=1, sticky="we")
+
+        self.add_process_button = tk.Button(self.frame, text="Añadir proceso", command=self.add_process_)
+        self.add_process_button.grid(row=2, column=0, columnspan=2)
+
+        self.count = tk.Label(self.frame, text=f"{self.count_proceso}", justify='right')
+        self.count.grid(row=3, column=0, columnspan=2)
+
+        self.frame.pack()
+
+    def add_process_(self):
+        burst = self.input1.get()
+        entry = self.input2.get()
+        self.count_proceso+=1
+        name = f"p{self.count_proceso}"
+        process = Proceso(entry, burst, name)
+
+        self.procesos.append(process)
+        self.close_windows()
+
+    def close_windows(self):
+        self.app = SRTFWindow(self.master)
+        
+        self.count_process = self.count_proceso
+        self.procesos_list = self.procesos
+        self.master.destroy()
 
 
-class Proceso():
-    entrada = 0
-    rafaga = 0
-    nombre = 0
-    wait = 0
+def main(): 
+    root = tk.Tk()
+    app = MainWindow(root)
+    root.mainloop()
 
-    def __init__(self, entrada, rafaga, nombre):
-        self.entrada = entrada
-        self.rafaga = rafaga
-        self.nombre = nombre
-        self.wait = 0
-
-    def __str__(self):
-        return f"'{self.nombre}'-'{self.rafaga}'-'{self.entrada}'- '{self.wait}'"
-
-    def remaining_time(self, tiempo_del_cpu):
-        return self.rafaga - (tiempo_del_cpu - self.entrada - self.wait)
-
-class SRTF():
-    processes = []
-    map_ordered_by_entry = {}
-    total_time = 0
-    count_processes = 0
-    wait_list = []
-    actual_process = None
-
-    def __init__(self, *procesos):
-        self.processes = procesos
-
-        for proceso in procesos:
-            self.total_time += proceso.rafaga
-            self.count_processes += 1
-
-            if proceso.entrada in self.map_ordered_by_entry:
-                self.map_ordered_by_entry[proceso.entrada].append(proceso)
-            else:
-                self.map_ordered_by_entry[proceso.entrada] = [proceso]
-            
-
-    def srtf(self):
-        gantt = {}
-        for i in range(0, self.total_time):
-            gantt[i] = {}
-            print(i)
-            for proceso in self.wait_list:
-                print(proceso)
-            if i in self.map_ordered_by_entry:
-                # Si se ingresan nuevos procesos, se añaden a la lista de espera
-                self.wait_list += self.map_ordered_by_entry[i]
-                # Siempre será el primero, se hace una comparación de cual de los
-                # procesos tiene menor tiempo de rafaga restante
-                shortest = self.wait_list[0]
-
-                # El tiempo de ráfaga restante se calcula con la siguiente formula
-                # tiempo restante = ráfaga - (momento del algoritmo - tiempo de entrada del proceso + tiempo de espera total del proceso)
-
-                for proceso in self.wait_list[1:]:
-                    if shortest.remaining_time(i) > proceso.remaining_time(i):
-                        shortest = proceso
-
-                if i == 0:
-                    self.remove_from_wait_list(shortest)
-                    self.actual_process = shortest
-                    
-                    gantt[i]["Proceso"] = self.actual_process.nombre
-                    gantt[i]["Ráfaga restante"] = self.actual_process.remaining_time(i)
-
-                elif self.actual_process.remaining_time(i) == 0:
-                    self.remove_from_wait_list(shortest)
-
-                    self.actual_process = shortest
-                    gantt[i]["Proceso"] = self.actual_process.nombre
-                    gantt[i]["Ráfaga restante"] = self.actual_process.remaining_time(i)
-
-                elif shortest.remaining_time(i) < self.actual_process.remaining_time(i):
-                    self.remove_from_wait_list(shortest)
-                    self.wait_list.append(self.actual_process)
-                    self.actual_process = shortest
-
-                    gantt[i]["Proceso"] = self.actual_process.nombre
-                    gantt[i]["Ráfaga restante"] = self.actual_process.remaining_time(i)
-
-                else:
-                    if not shortest in self.wait_list:
-                        wait_list.append(shortest)
-
-                    gantt[i]["Proceso"] = self.actual_process.nombre
-                    gantt[i]["Ráfaga restante"] = self.actual_process.remaining_time(i)
-
-            elif self.actual_process.remaining_time(i) != 0:
-
-                gantt[i]["Proceso"] = self.actual_process.nombre
-                gantt[i]["Ráfaga restante"] = self.actual_process.remaining_time(i)
-
-            else:
-                shortest = self.wait_list[0]
-
-                for proceso in self.wait_list[1:]:
-                    if shortest.remaining_time(i) > proceso.remaining_time(i):
-                        shortest = proceso
-                    elif shortest.remaining_time(i) == proceso.remaining_time(i):
-                        if shortest.entrada > proceso.entrada:
-                            shortest = proceso
-                
-                gantt[i]["Proceso"] = shortest.nombre
-                gantt[i]["Ráfaga restante"] = shortest.remaining_time(i)
-
-                self.wait_list.remove(shortest)
-                self.actual_process = shortest
-
-            for proceso in self.wait_list:
-                proceso.wait += 1
-
-        return gantt
-
-    def total_wait_time(self):
-        total = 0
-        for proceso in self.processes:
-            total += proceso.wait
-        return total
-
-    def remove_from_wait_list(self, process):
-        if process in self.wait_list:
-            self.wait_list.remove(process)
-
-p1 = Proceso(0, 7, "p1")
-p2 = Proceso(2, 4, "p2")
-p3 = Proceso(4, 1, "p3")
-p4 = Proceso(5, 4, "p4")
-procesos = [p1, p2, p3, p4]
-gantt = SRTF(*procesos)
-
-# print("Resultado:\n", json.dumps(gantt, indent=1, sort_keys=True))
-i=0
-
-result = gantt.srtf()
-for instant in result:
-    process = result[instant]
-    print(f"{i}: {process}")
-    i+=1
-
-print("Tiempo de espera individuales: ")
-for proceso in procesos:
-    print(f"Proceso: {proceso.nombre} - Espero: {proceso.wait}")
-print("Total de tiempo en espera: ", gantt.total_wait_time())
-print("Tiempo de espera promedio: ", gantt.total_wait_time()/gantt.count_processes)
+if __name__ == '__main__':
+    main()

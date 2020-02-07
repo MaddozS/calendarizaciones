@@ -1,3 +1,24 @@
+import json
+
+
+class Proceso():
+    entrada = 0
+    rafaga = 0
+    nombre = 0
+    wait = 0
+
+    def __init__(self, entrada, rafaga, nombre):
+        self.entrada = entrada
+        self.rafaga = rafaga
+        self.nombre = nombre
+        self.wait = 0
+
+    def __str__(self):
+        return f"'{self.nombre}'-'{self.rafaga}'-'{self.entrada}'- '{self.wait}'"
+
+    def remaining_time(self, tiempo_del_cpu):
+        return self.rafaga - (tiempo_del_cpu - self.entrada - self.wait)
+
 class SRTF():
     processes = []
     map_ordered_by_entry = {}
@@ -23,6 +44,9 @@ class SRTF():
         gantt = {}
         for i in range(0, self.total_time):
             gantt[i] = {}
+            print(i)
+            for proceso in self.wait_list:
+                print(proceso)
             if i in self.map_ordered_by_entry:
                 # Si se ingresan nuevos procesos, se añaden a la lista de espera
                 self.wait_list += self.map_ordered_by_entry[i]
@@ -61,7 +85,7 @@ class SRTF():
 
                 else:
                     if not shortest in self.wait_list:
-                        self.wait_list.append(shortest)
+                        wait_list.append(shortest)
 
                     gantt[i]["Proceso"] = self.actual_process.nombre
                     gantt[i]["Ráfaga restante"] = self.actual_process.remaining_time(i)
@@ -72,7 +96,6 @@ class SRTF():
                 gantt[i]["Ráfaga restante"] = self.actual_process.remaining_time(i)
 
             else:
-                #Fix
                 shortest = self.wait_list[0]
 
                 for proceso in self.wait_list[1:]:
@@ -102,3 +125,25 @@ class SRTF():
     def remove_from_wait_list(self, process):
         if process in self.wait_list:
             self.wait_list.remove(process)
+
+p1 = Proceso(0, 7, "p1")
+p2 = Proceso(2, 4, "p2")
+p3 = Proceso(4, 1, "p3")
+p4 = Proceso(5, 4, "p4")
+procesos = [p1, p2, p3, p4]
+gantt = SRTF(*procesos)
+
+# print("Resultado:\n", json.dumps(gantt, indent=1, sort_keys=True))
+i=0
+
+result = gantt.srtf()
+for instant in result:
+    process = result[instant]
+    print(f"{i}: {process}")
+    i+=1
+
+print("Tiempo de espera individuales: ")
+for proceso in procesos:
+    print(f"Proceso: {proceso.nombre} - Espero: {proceso.wait}")
+print("Total de tiempo en espera: ", gantt.total_wait_time())
+print("Tiempo de espera promedio: ", gantt.total_wait_time()/gantt.count_processes)
