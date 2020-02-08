@@ -9,20 +9,23 @@ class SRTF():
     def __init__(self, *procesos):
         self.processes = procesos
 
-        for proceso in procesos:
+        for proceso in self.processes:
             self.total_time += proceso.rafaga
             self.count_processes += 1
+            proceso.wait = 0
+            print(proceso.wait, " ", proceso.nombre)
 
             if proceso.entrada in self.map_ordered_by_entry:
-                self.map_ordered_by_entry[proceso.entrada].append(proceso)
+                if proceso not in self.map_ordered_by_entry[proceso.entrada]:
+                    self.map_ordered_by_entry[proceso.entrada].append(proceso)
             else:
                 self.map_ordered_by_entry[proceso.entrada] = [proceso]
-            
+        print(self.map_ordered_by_entry)
 
     def srtf(self):
         gantt = {}
         for i in range(0, self.total_time):
-            gantt[i] = {}
+
             if i in self.map_ordered_by_entry:
                 # Si se ingresan nuevos procesos, se añaden a la lista de espera
                 self.wait_list += self.map_ordered_by_entry[i]
@@ -40,39 +43,39 @@ class SRTF():
                 if i == 0:
                     self.remove_from_wait_list(shortest)
                     self.actual_process = shortest
-                    
+                    gantt[i] = {}
                     gantt[i]["Proceso"] = self.actual_process.nombre
-                    gantt[i]["Ráfaga restante"] = self.actual_process.remaining_time(i)
+                    # gantt[i]["Ráfaga restante"] = self.actual_process.remaining_time(i)
 
                 elif self.actual_process.remaining_time(i) == 0:
                     self.remove_from_wait_list(shortest)
 
                     self.actual_process = shortest
+                    gantt[i] = {}
                     gantt[i]["Proceso"] = self.actual_process.nombre
-                    gantt[i]["Ráfaga restante"] = self.actual_process.remaining_time(i)
+                    # gantt[i]["Ráfaga restante"] = self.actual_process.remaining_time(i)
 
                 elif shortest.remaining_time(i) < self.actual_process.remaining_time(i):
                     self.remove_from_wait_list(shortest)
                     self.wait_list.append(self.actual_process)
                     self.actual_process = shortest
-
+                    gantt[i] = {}
                     gantt[i]["Proceso"] = self.actual_process.nombre
-                    gantt[i]["Ráfaga restante"] = self.actual_process.remaining_time(i)
+                    # gantt[i]["Ráfaga restante"] = self.actual_process.remaining_time(i)
 
                 else:
-                    if not shortest in self.wait_list:
+                    if shortest not in self.wait_list:
                         self.wait_list.append(shortest)
-
+                    gantt[i] = {}
                     gantt[i]["Proceso"] = self.actual_process.nombre
                     gantt[i]["Ráfaga restante"] = self.actual_process.remaining_time(i)
 
             elif self.actual_process.remaining_time(i) != 0:
 
-                gantt[i]["Proceso"] = self.actual_process.nombre
-                gantt[i]["Ráfaga restante"] = self.actual_process.remaining_time(i)
-
+                # gantt[i]["Proceso"] = self.actual_process.nombre
+                # gantt[i]["Ráfaga restante"] = self.actual_process.remaining_time(i)
+                pass
             else:
-                #Fix
                 shortest = self.wait_list[0]
 
                 for proceso in self.wait_list[1:]:
@@ -81,16 +84,19 @@ class SRTF():
                     elif shortest.remaining_time(i) == proceso.remaining_time(i):
                         if shortest.entrada > proceso.entrada:
                             shortest = proceso
-                
+                gantt[i] = {}
                 gantt[i]["Proceso"] = shortest.nombre
-                gantt[i]["Ráfaga restante"] = shortest.remaining_time(i)
+                # gantt[i]["Ráfaga restante"] = shortest.remaining_time(i)
 
                 self.wait_list.remove(shortest)
                 self.actual_process = shortest
 
             for proceso in self.wait_list:
+                print("On wait ",proceso.wait, " ", proceso.nombre)
                 proceso.wait += 1
 
+            for proceso in self.processes:
+                print(proceso.wait, " ", proceso.nombre)
         return gantt
 
     def total_wait_time(self):
