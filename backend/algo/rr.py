@@ -19,8 +19,6 @@ class RR:
     def rr(self):
         gantt = {}
         while self.transcurred_time != self.total_time:
-            for x in self.processes:
-                print(x.nombre)
 
             for proceso in self.processes:
                 print(proceso.nombre, " ", proceso.rafaga)
@@ -34,15 +32,15 @@ class RR:
                     proceso.summon = self.transcurred_time
                     proceso.rafaga -= proceso.rafaga
 
-                    self.processes.remove(proceso)
-
                 gantt[self.transcurred_time] = {}
                 gantt[self.transcurred_time]["Proceso"] = proceso.nombre
                 gantt[self.transcurred_time]["Ráfaga restante"] = proceso.rafaga
 
+            for proceso in self.processes:
+                if proceso.rafaga == 0:
+                    self.processes.remove(proceso)
+
         return gantt
-
-
 
 
 
