@@ -8,12 +8,12 @@ class SRTF():
 
     def __init__(self, *procesos):
         self.processes = procesos
+        self.map_ordered_by_entry.clear()
 
         for proceso in self.processes:
             self.total_time += proceso.rafaga
             self.count_processes += 1
             proceso.wait = 0
-            print(proceso.wait, " ", proceso.nombre)
 
             if proceso.entrada in self.map_ordered_by_entry:
                 if proceso not in self.map_ordered_by_entry[proceso.entrada]:
@@ -68,7 +68,7 @@ class SRTF():
                         self.wait_list.append(shortest)
                     gantt[i] = {}
                     gantt[i]["Proceso"] = self.actual_process.nombre
-                    gantt[i]["Ráfaga restante"] = self.actual_process.remaining_time(i)
+                    #gantt[i]["Ráfaga restante"] = self.actual_process.remaining_time(i)
 
             elif self.actual_process.remaining_time(i) != 0:
 
@@ -92,11 +92,8 @@ class SRTF():
                 self.actual_process = shortest
 
             for proceso in self.wait_list:
-                print("On wait ",proceso.wait, " ", proceso.nombre)
                 proceso.wait += 1
 
-            for proceso in self.processes:
-                print(proceso.wait, " ", proceso.nombre)
         return gantt
 
     def total_wait_time(self):

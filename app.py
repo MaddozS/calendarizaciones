@@ -7,21 +7,17 @@ import copy
 class App(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
-        container = tk.Frame(self)
-
-        container.pack(side="top", fill="both", expand=True)
-
-        container.grid_rowconfigure(0, weight=1)
-        container.grid_columnconfigure(0, weight=1)
+        self.container = tk.Frame(self)
 
         self.frames = {}
 
         for F in (MainWindow, SRTFWindow):
-            frame = F(container, self)
+            frame = F(self.container, self)
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky="nsew")
 
         self.show_frame(MainWindow)
+        self.container.pack()
 
     def show_frame(self, cont):
 
@@ -54,77 +50,78 @@ class MainWindow(tk.Frame):
 class SRTFWindow(tk.Frame):
     procesos_list = []
     count_proceso = 0
+    promedio = 0
+    result = {}
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        self.frame = tk.Frame(self, background="black")
+        self.frame = tk.Frame(self)
+        self.frame.grid(row=0, column=0)
 
         self.create_table_task()
         self.create_wait_table()
-
-        self.frame.pack()
+        self.create_gantt()
 
     def add_process_window(self):
         AddProcessWindowSRTF(tk.Toplevel(self), self.count_proceso)
 
     def create_table_task(self):
         # Table of the processes added
-        self.process_table = tk.Frame(self.frame)
-        self.process_table.grid(row=0, column=0, sticky="nwe", padx=(15, 30), pady=(10, 40))
+        self.process_table = tk.Frame(self.frame, borderwidth=2, relief="solid")
+        self.process_table.grid(row=0, column=0, sticky="nswe", padx=(20, 10))
 
-        self.name_process_head = tk.Label(self.process_table, text="Proceso", justify='center', background="white")
-        self.name_process_head.grid(row=0, column=0, sticky="we")
+        self.name_process_head = tk.Label(self.process_table, text="Procesos", justify='center', background="#FEFCE5")
+        self.name_process_head.grid(row=0, column=0, sticky="wsn")
 
-        self.entry_process_head = tk.Label(self.process_table, text="Tiempo de entrada", justify='center', background="white")
-        self.entry_process_head.grid(row=0, column=1, sticky="we")
+        self.add_process_button_head = tk.Button(self.process_table, text=" agregar ", command=self.add_process_window)
+        self.add_process_button_head.grid(row=0, column=1, sticky="ens")
 
-        self.burst_process_head = tk.Label(self.process_table, text="Ráfaga", justify='center', background="white")
-        self.burst_process_head.grid(row=0, column=2, sticky="we")
-
-        self.add_process_button_head = tk.Button(self.process_table, text="+", command=self.add_process_window)
-        self.add_process_button_head.grid(row=0, column=3, sticky="we")
-
-        self.process_table_body = tk.Frame(self.process_table, background="red")
+        self.process_table_body = tk.Frame(self.process_table)
         self.process_table_body.grid(row=1, column=0, sticky="we", columnspan=4)
 
     def update_process_list_table(self):
         i = 0
         for p in self.procesos_list:
-            name_process = tk.Label(self.process_table_body, text=p.nombre, justify='center', name=f"np{i+1}")
-            name_process.grid(row=i, column=0, sticky="we")
+            name_process = tk.Label(self.process_table_body, text="Nombre: " + p.nombre, justify='center', name=f"np{i+1}")
+            name_process.grid(row=i, column=0, sticky="we", padx=(10, 5))
 
-            entry_process = tk.Label(self.process_table_body, text=p.entrada, justify='center', name=f"ep{i+1}")
-            entry_process.grid(row=i, column=1, sticky="we")
+            entry_process = tk.Label(self.process_table_body, text="Entro: " + str(p.entrada), justify='center', name=f"ep{i+1}")
+            entry_process.grid(row=i, column=1, sticky="we", padx=5)
 
-            burst_process = tk.Label(self.process_table_body, text=p.rafaga, justify='center', name=f"bp{i+1}")
-            burst_process.grid(row=i, column=2, sticky="we")
+            burst_process = tk.Label(self.process_table_body, text="Ráfaga: " + str(p.rafaga), justify='center', name=f"bp{i+1}")
+            burst_process.grid(row=i, column=2, sticky="we", padx=5)
 
-            remove_process_button = tk.Button(self.process_table_body, text="-", command=lambda: self.remove_process(p), name=f"rp{i+1}")
-            remove_process_button.grid(row=i, column=3, sticky="we")
+            remove_process_button = tk.Button(self.process_table_body, text=" eliminar ", command=lambda: self.remove_process(p.nombre), name=f"rp{i+1}", foreground="white", background="red")
+            remove_process_button.grid(row=i, column=3, sticky="we", padx=(5, 10))
             i += 1
 
     def create_wait_table(self):
-        self.wait_table = tk.Frame(self.frame)
-        self.wait_table.grid(row=0, column=1, sticky="nwe", padx=(30, 15), pady=(10, 40))
+        self.wait_table = tk.Frame(self.frame, borderwidth=2, relief="solid")
+        self.wait_table.grid(row=0, column=1, sticky="nwes", padx=(20,10))
 
-        self.wait_process_head = tk.Label(self.wait_table, text="Proceso", justify='center', background="white")
-        self.wait_process_head.grid(row=0, column=0, sticky="we")
+        self.wburst_process_head = tk.Label(self.wait_table, text="Tiempo de espera por proceso", justify='center', background="white")
+        self.wburst_process_head.grid(row=0, column=0, sticky="wens", columnspan=2)
 
-        self.wburst_process_head = tk.Label(self.wait_table, text="Tiempo de espera", justify='center', background="white")
-        self.wburst_process_head.grid(row=0, column=1, sticky="we")
+        self.wprocess_table_body = tk.Frame(self.wait_table)
+        self.wprocess_table_body.grid(row=1, column=0, sticky="wens", columnspan=2)
 
-        self.wprocess_table_body = tk.Frame(self.wait_table, background="red")
-        self.wprocess_table_body.grid(row=1, column=0, sticky="we", columnspan=2)
+        self.w_media = tk.Label(self.wait_table, text="Tiempo promedio de espera: ", justify='center', background="white")
+        self.w_media.grid(row=2, column=0, sticky="nswe")
+
+        self.w_media = tk.Label(self.wait_table, text=self.promedio, justify='center', background="white")
+        self.w_media.grid(row=2, column=1, sticky="wnse")
 
     def update_process_wait_table(self):
         i = 0
         for p in self.procesos_list:
-            name_process = tk.Label(self.wprocess_table_body, text=p.nombre, justify='center', name=f"wnp{i+1}")
-            name_process.grid(row=i, column=0, sticky="we")
+            name_process = tk.Label(self.wprocess_table_body, text="Nombre: " + p.nombre, justify='center', name=f"np{i+1}")
+            name_process.grid(row=i, column=0, sticky="we", padx=(10, 5))
 
-            burst_process = tk.Label(self.wprocess_table_body, text=p.wait, justify='center', name=f"wwp{i+1}")
-            burst_process.grid(row=i, column=1, sticky="we")
+            wait_process = tk.Label(self.wprocess_table_body, text="Espero: " + str(p.wait), justify='center', name=f"ep{i+1}")
+            wait_process.grid(row=i, column=1, sticky="we", padx=(5,10))
             i += 1
+
+        self.w_media["text"] = self.promedio
 
     def remove_process(self, process):
         for w in self.process_table_body.winfo_children():
@@ -134,19 +131,56 @@ class SRTFWindow(tk.Frame):
             w.destroy()
 
         self.count_proceso -= 1
+        
+        for x in self.procesos_list:
+            if process == x.nombre:
+                print("found")
+                self.procesos_list.remove(x)
+                break
 
-        self.procesos_list.remove(process)
+        self.update_gantt()
         self.update_process_list_table()
         self.update_process_wait_table()
 
     def update_gantt(self):
         aux = self.procesos_list
-        for p in aux:
-            print("ayuda dios ", p)
         algo = SRTF(*aux)
-        result = algo.srtf()
-        print(result)
+        self.result = algo.srtf()
 
+        print(self.result)
+        self.promedio = algo.total_wait_time() / algo.count_processes
+        self.total_time = algo.total_time
+
+        self.create_gantt()
+
+    def create_gantt(self):
+        self.c_frame = tk.Frame(self.frame, borderwidth=2, relief="solid")
+        self.c_frame.grid(row=1, column=0, sticky="nwes", columnspan=2, pady=40)
+
+        if self.result:
+            self.delete_gantt()
+
+            i = 0
+            for x in self.result:
+                print("xd", x)
+                text = "|" + "    " + str(self.result[x]['Proceso']) + "    "
+                p = tk.Label(self.c_frame, text=text, justify='center', name=f"p{i+1}")
+                p.grid(row=0, column=i, sticky="wens")
+
+                n = tk.Label(self.c_frame, text=str(x), justify='center', name=f"pnum{i+1}")
+                n.grid(row=1, column=i, sticky="wns")
+                i += 1
+                print("f")
+
+            p2 = tk.Label(self.c_frame, text="|", justify='center', name=f"pend")
+            p2.grid(row=0, column=i, sticky="wens")
+
+            n = tk.Label(self.c_frame, text=self.total_time, justify='center', name=f"pnumend")
+            n.grid(row=1, column=i, sticky="wns")
+
+    def delete_gantt(self):
+        for w in self.c_frame.winfo_children():
+            w.destroy()
 
 class AddProcessWindowSRTF():
 
@@ -176,15 +210,18 @@ class AddProcessWindowSRTF():
         self.count.grid(row=3, column=0, columnspan=2)
 
     def add_process_(self):
-        burst = self.input1.get()
-        entry = self.input2.get()
-        self.parent.master.count_proceso += 1
+        try:
+            burst = self.input1.get()
+            entry = self.input2.get()
+            self.parent.master.count_proceso += 1
 
-        name = f"p{self.parent.master.count_proceso}"
-        process = Proceso(int(entry), int(burst), name)
+            name = f"p{self.parent.master.count_proceso}"
+            process = Proceso(int(entry), int(burst), name)
 
-        self.parent.master.procesos_list.append(process)
-        self.close_windows()
+            self.parent.master.procesos_list.append(process)
+            self.close_windows()
+        except:
+            self.parent.master.count_proceso -= 1
 
     def close_windows(self):
         self.parent.master.update_gantt()

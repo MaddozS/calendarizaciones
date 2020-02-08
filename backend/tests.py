@@ -20,7 +20,7 @@ print(result)
 # print("Tiempo de espera individuales: ")
 for proceso in procesos:
     print(f"Proceso: {proceso.nombre} - Espero: {proceso.wait}")
-# print("Total de tiempo en espera: ", gantt.total_wait_time())
-# print("Tiempo de espera promedio: ", gantt.total_wait_time()/gantt.count_processes)
+print("Total de tiempo en espera: ", gantt.total_wait_time())
+print("Tiempo de espera promedio: ", gantt.total_wait_time()/gantt.count_processes)
 
 
